@@ -1,0 +1,15 @@
+{
+  "timezone": "Europe/Rome",
+  "windowStart": "10:00",
+  "windowEnd": "13:00",
+  "everyDays": 2,
+  "maxLateHours": 24,
+  "board": "personal pins",
+  "boardId": "",
+  "apiBase": "https://api.pinterest.com",
+  "scopes": "boards:read,pins:read,pins:write",
+  "redirectUri": "http://localhost:8080/callback",
+  "captionModel": "opus",
+  "jpegWidth": 1440,
+  "jpegQuality": 88
+}

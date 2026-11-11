@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+!.env.example
+logs/
+
+# new images waiting in the root, and the heavy originals: local only
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+scheduled/
+duplicates/
+# failed/: loose originals stay local, the pin folders are tracked
+/failed/*
+!/failed/*/
