@@ -2,15 +2,15 @@ node_modules/
 .env
 .env.*
 !.env.example
-logs/
 
-# new images waiting in the root, and the heavy originals: local only
+# everything the runner works on stays on this PC
 /*.png
 /*.jpg
 /*.jpeg
 /*.webp
 scheduled/
 duplicates/
-# failed/: loose originals stay local, the pin folders are tracked
-/failed/*
-!/failed/*/
+failed/
+queue/
+posted/
+logs/

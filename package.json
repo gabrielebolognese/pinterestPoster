@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "node runner.mjs",
     "scan": "node scan.mjs",
     "plan": "node scan.mjs --dry-run",
     "post": "node post.mjs",

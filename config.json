@@ -4,6 +4,7 @@
   "windowEnd": "13:00",
   "everyDays": 2,
   "maxLateHours": 24,
+  "retryMinutes": 15,
   "board": "personal pins",
   "boardId": "",
   "apiBase": "https://api.pinterest.com",

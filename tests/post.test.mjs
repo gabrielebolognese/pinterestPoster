@@ -17,6 +17,8 @@ function slot(hours) {
 
 function makeRoot(pins) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pins-test-'));
+  fs.mkdirSync(path.join(root, 'scheduled'));
+  fs.writeFileSync(path.join(root, 'scheduled', 'photo.png'), 'original');
   for (const [name, title] of Object.entries(pins)) {
     fs.mkdirSync(path.join(root, 'queue', name), { recursive: true });
     fs.writeFileSync(path.join(root, 'queue', name, 'photo.jpg'), 'fake-jpeg');
@@ -54,7 +56,7 @@ function fakeApi({ failPins = false } = {}) {
 
 function run(root, env) {
   return new Promise((resolve) => {
-    const p = spawn(process.execPath, [POST], { env: { ...process.env, PINS_ROOT: root, PINTEREST_ACCESS_TOKEN: '', ...env } });
+    const p = spawn(process.execPath, [POST], { env: { ...process.env, PINS_ROOT: root, PINTEREST_ACCESS_TOKEN: '', PINS_RETRY_MINUTES: '0', ...env } });
     let out = '';
     p.stdout.on('data', (c) => (out += c));
     p.stderr.on('data', (c) => (out += c));
@@ -84,7 +86,7 @@ test('posts the due pin to the named board and leaves the future one', async () 
   assert.equal(pin(root, 'posted', dueName).pin_id, '999');
 });
 
-test('without the token secret nothing is touched', async () => {
+test('without a Pinterest login nothing is touched', async () => {
   const dueName = slot(-30);
   const root = makeRoot({ [dueName]: 'Due' });
   const r = await run(root, {});
@@ -109,16 +111,31 @@ test('a failed post stays in the queue with its error and is retried', async () 
   assert.equal(r2.code, 0, r2.out);
   assert.deepEqual(ls(root, 'posted'), [dueName]);
   assert.equal(pin(root, 'posted', dueName).last_error, undefined);
+  assert.equal(pin(root, 'posted', dueName).last_try, undefined);
 });
 
-test('a pin more than 24 hours late goes to failed/ without being posted', async () => {
+test('a failed post is not tried again before the retry wait is over', async () => {
+  const dueName = slot(-2);
+  const root = makeRoot({ [dueName]: 'Due' });
+  const down = await fakeApi({ failPins: true });
+  await run(root, { PINTEREST_ACCESS_TOKEN: 'tok', PINTEREST_API_BASE: down.base, PINS_RETRY_MINUTES: '15' });
+  const before = down.calls.length;
+  await run(root, { PINTEREST_ACCESS_TOKEN: 'tok', PINTEREST_API_BASE: down.base, PINS_RETRY_MINUTES: '15' });
+  down.server.close();
+  assert.equal(down.calls.length, before);
+  assert.deepEqual(ls(root, 'queue'), [dueName]);
+});
+
+test('a pin more than 24 hours late leaves the calendar: its original goes to failed/ with a note', async () => {
   const lateName = slot(-25);
   const root = makeRoot({ [lateName]: 'Late' });
   const { server, calls, base } = await fakeApi();
   const r = await run(root, { PINTEREST_ACCESS_TOKEN: 'tok', PINTEREST_API_BASE: base });
   server.close();
   assert.equal(r.code, 1);
-  assert.deepEqual(ls(root, 'failed'), [lateName]);
+  assert.deepEqual(ls(root, 'failed'), ['photo.png', 'photo.txt']);
+  assert.deepEqual(ls(root, 'queue'), []);
+  assert.deepEqual(ls(root, 'scheduled'), []);
   assert.equal(calls.filter((c) => c.url === '/v5/pins').length, 0);
-  assert.match(pin(root, 'failed', lateName).last_error, /24 hours/);
+  assert.match(fs.readFileSync(path.join(root, 'failed', 'photo.txt'), 'utf8'), /24 hours/);
 });

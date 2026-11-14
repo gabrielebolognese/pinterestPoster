@@ -2,12 +2,11 @@
 // Needs PINTEREST_APP_ID and PINTEREST_APP_SECRET in .env, and the redirect link from config.json
 // (http://localhost:8080/callback) added to the app's Redirect URIs on developers.pinterest.com.
 import http from 'node:http';
-import fs from 'node:fs';
 import crypto from 'node:crypto';
-import { exec, execFileSync } from 'node:child_process';
-import { cfg, ROOT, at } from './lib/util.mjs';
+import { exec } from 'node:child_process';
+import { cfg } from './lib/util.mjs';
 import { readEnv } from './lib/env.mjs';
-import { tokenRequest, saveTokens, pushSecret } from './lib/token.mjs';
+import { tokenRequest, saveTokens } from './lib/token.mjs';
 
 const env = readEnv();
 if (!env.PINTEREST_APP_ID || !env.PINTEREST_APP_SECRET) {
@@ -51,14 +50,6 @@ const server = http.createServer(async (req, res) => {
     });
     saveTokens(data);
     console.log(`Logged in. Tokens saved in .env (scopes: ${data.scope}).`);
-    const hasRemote =
-      fs.existsSync(at('.git')) && execFileSync('git', ['remote'], { cwd: ROOT, encoding: 'utf8' }).trim() !== '';
-    if (hasRemote) {
-      pushSecret(data.access_token);
-      console.log('Access token sent to the GitHub secret PINTEREST_ACCESS_TOKEN.');
-    } else {
-      console.log('No GitHub repo connected yet: the token will be sent to GitHub by the next scan after one is connected.');
-    }
     done(200, 'Pinterest login done. You can close this tab.');
   } catch (err) {
     done(500, 'Login failed while getting the tokens. See the terminal.');

@@ -1,4 +1,4 @@
-// Preview the Pin text for one image without scheduling anything: node caption-test.mjs wall-handstand.png
+// Preview the Pin text for one image without scheduling anything: node preview-caption.mjs wall-handstand.png
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,7 +8,7 @@ import { writeCaption } from './lib/caption.mjs';
 
 const file = process.argv[2];
 if (!file || !fs.existsSync(file)) {
-  console.error('Usage: node caption-test.mjs <image file>');
+  console.error('Usage: node preview-caption.mjs <image file>');
   process.exit(1);
 }
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pinterest-autopost-'));
